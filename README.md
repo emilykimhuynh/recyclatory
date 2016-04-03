@@ -2,12 +2,19 @@
 An online repository to keep track of your recycling habits.
 
 TODO: configuration instructions
+
 TODO: installation instructions
+
 TODO: operating instructions
+
 TODO: contact information for the distributor or programmer
+
 TODO: known bugs
+
 TODO: troubleshooting
+
 TODO: credits and acknowledgements
+
 TODO: a changelog
 
 ##Copyright and Licensing Information
