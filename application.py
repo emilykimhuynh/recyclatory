@@ -8,11 +8,11 @@ from sqlite3 import dbapi2 as sqlite3
 from flask import Flask, request, session, url_for, redirect, \
      render_template, abort, g, flash, _app_ctx_stack
 from werkzeug import check_password_hash, generate_password_hash
-from flask.ext.googlemaps import GoogleMaps
+# from flask.ext.googlemaps import GoogleMaps
 
 # create our application
 app = Flask(__name__)
-GoogleMaps(app)
+#GoogleMaps(app)
 
 # configuration
 app.config.update(dict(
@@ -34,6 +34,9 @@ def before_request():
 #   DATABASE
 #
 ######################################################################
+
+#TODO: clean queries
+
 def connect_db():
     """Connects to the specific database."""
     rv = sqlite3.connect(app.config['DATABASE'])
@@ -101,17 +104,6 @@ def get_phase(uid):
     rv = query_db('select phase from user where uid = ?',
                     [uid], one=True)
     return rv[0] if rv else None
-    # day = get_day(uid)
-    # if day <= 5:
-    #     return 1
-    # elif day >= 6 and day <= 10:
-    #     return 2
-    # elif day >= 11 and day <= 15:
-    #     return 3
-    # elif day >= 16 and day <= 20:
-    #     return 4
-    # else:
-    #     return 5
 
 ######################################################################
 #
@@ -123,8 +115,7 @@ def set_phase(uid):
     """Sets the phase of a user in the database."""
     db = get_db()
     day = get_day(uid)
-    print("DAY IS")
-    print(day)
+
     if day <= 5:
         db.execute('''update user
                     set phase = 1
@@ -152,8 +143,6 @@ def set_phase(uid):
 def increment_day(uid):
     """Increments the day value of a user in the database."""
     db = get_db()
-    print('date is')
-    print(datetime.datetime.utcnow())
     db.execute('''update user
                 set day = day + 1, inc_log = ?
                 where uid = ?;''', [datetime.datetime.utcnow(), session['uid']])
@@ -192,13 +181,9 @@ def update_state(uid):
 
     #determine correct timestamp difference
     if dec_diff == inc_diff:
-        print("We need to decrement the state")
         decrement_day(uid)
-    elif inc_diff.seconds > 10 and dec_diff.seconds > 10:   #TODO:
-        print("We need to decrement the state")
+    elif inc_diff.seconds > 10 and dec_diff.seconds > 10:
         decrement_day(uid)
-    else:
-        print("We do not need to decrement the state, do nothing")
 
 
 ######################################################################
@@ -212,10 +197,8 @@ def public_home():
 
 @app.route('/home')
 def user_home():
-    # print(get_phase(session['uid']) > 2)
-    print("I AM HERE")
+
     if get_phase(session['uid']) == 5:
-        print("final phase")
         return render_template('complete.html')
 
     #update the user state if necessary
@@ -237,9 +220,11 @@ def near_me():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """Registers the user."""
+
     if g.user:
         return redirect(url_for('user_home'))
     error = None
+
     if request.method == 'POST':
         if not request.form['username']:
             error = 'You have to enter a username'
@@ -260,27 +245,30 @@ def register():
             db.commit()
             flash('You were successfully registered and can login now')
             return redirect(url_for('login'))
+
     return render_template('register.html', error=error)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Logs the user in."""
+
     if g.user:
         return redirect(url_for('user_home'))
     error = None
+
     if request.method == 'POST':
-        print("in the post method")
         user = query_db('''select * from user where
             username = ?''', [request.form['username']], one=True)
+
         if user is None:
             error = 'Invalid username'
         elif not check_password_hash(user['pw_hash'], request.form['password']):
             error = 'Invalid password'
         else:
-            # print('\nELSE\n')
             flash('You were logged in')
             session['uid'] = user['uid']
             return redirect(url_for('user_home'))
+
     return render_template('login.html', error=error)
 
 @app.route('/logout')
